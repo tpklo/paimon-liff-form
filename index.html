@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>บันทึกรายการ</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;700;900&display=swap" rel="stylesheet">
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { font-family: 'Noto Sans Thai', sans-serif; font-size: 18px; color: #222; background: #f4f6f9; }
+  body { padding: 16px 12px 100px; min-height: 100vh; }
+  h1 { font-size: 22px; font-weight: 900; margin-bottom: 4px; }
+  .sub { font-size: 14px; color: #666; margin-bottom: 16px; }
+  .entry { background: #fff; border-radius: 14px; padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); position: relative; }
+  .entry-header { display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 15px; margin-bottom: 10px; color: #444; }
+  .delete-btn { background: #fff0f0; border: none; color: #d33; width: 32px; height: 32px; border-radius: 50%; font-size: 16px; font-weight: 900; cursor: pointer; }
+  .delete-btn:active { background: #ffd6d6; }
+  label { display: block; font-size: 14px; color: #555; margin-bottom: 4px; font-weight: 700; }
+  input[type=text], input[type=number], input[type=date] { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 10px; font-size: 18px; font-family: inherit; background: #fafafa; }
+  input:focus { outline: none; border-color: #4a90e2; background: #fff; }
+  .row { margin-bottom: 10px; }
+  .preset-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .preset-btn { flex: 1; min-width: 60px; padding: 8px; border: 1.5px solid #ddd; background: #fff; border-radius: 8px; font-size: 14px; font-family: inherit; cursor: pointer; color: #444; }
+  .preset-btn.active { background: #4a90e2; color: #fff; border-color: #4a90e2; }
+  .group-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .group-btn { padding: 12px 4px; border: 2px solid #ddd; background: #fff; border-radius: 10px; font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer; text-align: center; color: #555; }
+  .group-btn.active { background: #e7f5ff; border-color: #4a90e2; color: #1565c0; }
+  .group-btn.biz.active { background: #fff4e6; border-color: #e89e1c; color: #b3590a; }
+  .group-btn.income.active { background: #e6f7ee; border-color: #2eb872; color: #15703f; }
+  .add-btn { width: 100%; padding: 14px; background: #fff; border: 2px dashed #4a90e2; color: #4a90e2; font-size: 17px; font-weight: 700; border-radius: 12px; font-family: inherit; cursor: pointer; margin-bottom: 16px; }
+  .add-btn:active { background: #e7f5ff; }
+  .summary { background: #fff; border-radius: 12px; padding: 14px; margin-bottom: 12px; font-size: 16px; font-weight: 700; text-align: center; }
+  .summary .total { font-size: 24px; color: #1565c0; }
+  .fixed-bottom { position: fixed; bottom: 0; left: 0; right: 0; padding: 12px; background: linear-gradient(to top, #f4f6f9, rgba(244,246,249,0.95)); }
+  .save-btn { width: 100%; padding: 18px; background: #4a90e2; color: #fff; border: none; border-radius: 14px; font-size: 19px; font-weight: 900; font-family: inherit; cursor: pointer; box-shadow: 0 4px 12px rgba(74,144,226,0.4); }
+  .save-btn:active { transform: scale(0.98); background: #357abd; }
+  .save-btn:disabled { background: #aaa; box-shadow: none; }
+  .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #2eb872; color: #fff; padding: 14px 24px; border-radius: 30px; font-weight: 700; z-index: 999; box-shadow: 0 4px 20px rgba(0,0,0,0.2); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+  .toast.show { opacity: 1; }
+  .toast.error { background: #d33; }
+  .history-list { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 6px; margin-top: 6px; -webkit-overflow-scrolling: touch; }
+  .history-chip { flex: 0 0 auto; padding: 6px 14px; background: #f0f4f8; border: 1.5px solid #d0dae5; border-radius: 20px; font-size: 14px; color: #333; cursor: pointer; white-space: nowrap; font-family: inherit; }
+  .history-chip:active { background: #d6e4f0; }
+  .done-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh; text-align: center; padding: 30px; }
+  .done-wrap .cat { font-size: 90px; }
+  .done-wrap h2 { font-size: 26px; color: #1565c0; margin: 20px 0; font-weight: 900; }
+  .done-wrap p { color: #666; margin-bottom: 30px; }
+  .done-wrap button { padding: 16px 40px; background: #4a90e2; color: #fff; border: none; border-radius: 14px; font-size: 18px; font-weight: 700; font-family: inherit; }
+</style>
+</head>
+<body>
+  <h1>📝 บันทึกรายการ</h1>
+  <p class="sub">เพิ่มได้หลายรายการในครั้งเดียว</p>
+  <div id="entries"></div>
+  <button class="add-btn" onclick="addEntry()">+ เพิ่มรายการ</button>
+  <div class="summary">รวม <span id="count">0</span> รายการ = <span class="total" id="totalAmount">0</span> บาท</div>
+  <div class="fixed-bottom"><button class="save-btn" id="saveBtn" onclick="saveAll()">💾 บันทึกทั้งหมด</button></div>
+  <div class="toast" id="toast"></div>
+<script>
+const LIFF_ID = '2008204318-3Wp9aRkY';
+const EXEC_URL = 'https://script.google.com/macros/s/AKfycbx7h7piFmoZpA7FGWx1Xp_5E9cBUfg31ey6-CA0iBm1-UYpF1X3COKfNj9EI7x-lIUvLA/exec';
+const PRESET_AMOUNTS = [50, 100, 200, 500, 1000];
+let entries = [];
+let history = [];
+let nextId = 1;
+let defType = 'รายจ่าย';
+
+function $(id) { return document.getElementById(id); }
+function toast(msg, isError) { const t = $('toast'); t.textContent = msg; t.className = 'toast show' + (isError ? ' error' : ''); setTimeout(() => t.className = 'toast' + (isError ? ' error' : ''), 2500); }
+
+// LIFF init — query string (?type=income) is forwarded by LIFF to this endpoint
+try {
+  var qp = new URLSearchParams(location.search);
+  if (qp.get('type') === 'income') defType = 'รายรับ';
+} catch (e) {}
+if (window.liff) { liff.init({ liffId: LIFF_ID }).catch(function(e){ console.warn('liff init failed', e); }); }
+
+function todayStr() { return new Date().toISOString().slice(0, 10); }
+
+function addEntry() {
+  const id = nextId++;
+  entries.push({ id, item: '', amount: 0, group: 'ส่วนตัว', type: defType, date: todayStr() });
+  render();
+  setTimeout(() => { const el = document.querySelector(`[data-entry-id="${id}"] input[name=item]`); if (el) el.focus(); }, 50);
+}
+function deleteEntry(id) { entries = entries.filter(e => e.id !== id); if (entries.length === 0) addEntry(); render(); }
+function updateEntry(id, key, value) { const e = entries.find(x => x.id === id); if (!e) return; e[key] = value; updateSummary(); }
+function setAmount(id, val) {
+  const e = entries.find(x => x.id === id); if (!e) return;
+  e.amount = Number(val) || 0;
+  const input = document.querySelector(`[data-entry-id="${id}"] input[name=amount]`); if (input) input.value = e.amount || '';
+  document.querySelectorAll(`[data-entry-id="${id}"] .preset-btn`).forEach(btn => { btn.classList.toggle('active', Number(btn.dataset.amount) === e.amount); });
+  updateSummary();
+}
+function setType(id, type) { const e = entries.find(x => x.id === id); if (!e) return; e.type = type; render(); }
+function setGroupOnly(id, group) { const e = entries.find(x => x.id === id); if (!e) return; e.group = group; render(); }
+function setDate(id, d) { const e = entries.find(x => x.id === id); if (!e) return; e.date = d; }
+function updateSummary() {
+  const valid = entries.filter(e => e.amount > 0);
+  $('count').textContent = valid.length;
+  $('totalAmount').textContent = valid.reduce((s, e) => s + (e.type === 'รายรับ' ? -e.amount : e.amount), 0).toLocaleString();
+  $('saveBtn').disabled = valid.length === 0 || valid.some(e => !e.item);
+}
+function escapeHtml(s) { return String(s || '').replace(/[<>&"']/g, c => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;' })[c]); }
+function render() {
+  const container = $('entries');
+  container.innerHTML = entries.map((e, i) => `
+    <div class="entry" data-entry-id="${e.id}">
+      <div class="entry-header"><span>รายการ #${i + 1}</span><button class="delete-btn" onclick="deleteEntry(${e.id})">×</button></div>
+      <div class="row"><label>ชื่อรายการ</label>
+        <input type="text" name="item" value="${escapeHtml(e.item)}" placeholder="เช่น ตลาด, กาแฟ" oninput="updateEntry(${e.id}, 'item', this.value)" autocomplete="off">
+        <div class="history-list">${history.slice(0, 12).map(h => `<span class="history-chip" onclick="pickHistory(${e.id}, '${escapeHtml(h.item)}')">${escapeHtml(h.item)}</span>`).join('')}</div>
+      </div>
+      <div class="row"><label>จำนวนเงิน (บาท)</label>
+        <input type="number" inputmode="decimal" name="amount" value="${e.amount || ''}" placeholder="0" oninput="updateEntry(${e.id}, 'amount', Number(this.value) || 0); updateSummary();">
+        <div class="preset-row">${PRESET_AMOUNTS.map(a => `<button class="preset-btn ${e.amount === a ? 'active' : ''}" data-amount="${a}" onclick="setAmount(${e.id}, ${a})">${a.toLocaleString()}</button>`).join('')}</div>
+      </div>
+      <div class="row"><label>วันที่</label>
+        <input type="date" name="date" value="${e.date}" oninput="setDate(${e.id}, this.value)">
+      </div>
+      <div class="row"><label>ประเภท</label>
+        <div class="group-toggle">
+          <button class="group-btn ${e.type !== 'รายรับ' ? 'active' : ''}" onclick="setType(${e.id}, 'รายจ่าย')">💸 รายจ่าย</button>
+          <button class="group-btn income ${e.type === 'รายรับ' ? 'active' : ''}" onclick="setType(${e.id}, 'รายรับ')">💵 รายรับ</button>
+        </div>
+      </div>
+      <div class="row"><label>กลุ่ม</label>
+        <div class="group-toggle">
+          <button class="group-btn ${e.group === 'ส่วนตัว' ? 'active' : ''}" onclick="setGroupOnly(${e.id}, 'ส่วนตัว')">👤 ส่วนตัว</button>
+          <button class="group-btn biz ${e.group === 'บริษัท' ? 'active' : ''}" onclick="setGroupOnly(${e.id}, 'บริษัท')">🏢 บริษัท</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  updateSummary();
+}
+function pickHistory(id, item) {
+  updateEntry(id, 'item', item);
+  const h = history.find(x => x.item === item);
+  if (h) { const e = entries.find(x => x.id === id); if (e) { e.group = h.group || 'ส่วนตัว'; e.type = h.type || 'รายจ่าย'; } }
+  render();
+}
+function detectCategory(item) {
+  const cats = { 'อาหาร': ['ตลาด','ข้าว','ผัก','ปลา','อาหาร','กาแฟ','ก๋วยจั๊บ','ขนม','น้ำตาล','เนื้อ','หมู','ไก่'], 'สาธารณูปโภค': ['น้ำ','ไฟ','ค่าน้ำ','ค่าไฟ','เน็ต','โทรศัพท์','ค่าคอนโด','ค่าเช่า'], 'เดินทาง': ['น้ำมัน','แก๊ส','ค่ารถ','grab','ทางด่วน'], 'สุขภาพ': ['ยา','หมอ','โรงพยาบาล','คลินิก'], 'ของใช้': ['สบู่','แชมพู','กระดาษ','ทิชชู่'], 'สินค้า/อุปกรณ์': ['หมึก','พริ้นเตอร์','โน๊ตบุ๊ค','กระดาษ A4'], 'หนี้สิน': ['หนี้','ผ่อน','บัตรเครดิต'] };
+  const lower = String(item).toLowerCase();
+  for (const [cat, kw] of Object.entries(cats)) { if (kw.some(k => lower.includes(k))) return cat; }
+  return 'อื่นๆ';
+}
+function loadHistory() {
+  try {
+    fetch(EXEC_URL + '?mode=history').then(function(r){ return r.json(); }).then(function(d){ history = (d && d.items) || []; render(); }).catch(function(){});
+  } catch (e) {}
+}
+function closeForm() {
+  try { if (window.liff && liff.closeWindow) { liff.closeWindow(); return; } } catch (e) {}
+  try { window.close(); } catch (e2) {}
+  try { history.back(); } catch (e3) {}
+}
+function showSuccess(n) {
+  document.body.innerHTML = '<div class="done-wrap"><div class="cat">🐱</div><h2>บันทึก ' + n + ' รายการแล้วครับ</h2><p>ไพม่อนปิดให้อัตโนมัติ...</p><button id="closeBtn">ปิด</button></div>';
+  document.getElementById('closeBtn').onclick = closeForm;
+  setTimeout(closeForm, 1500);
+}
+function saveAll() {
+  const valid = entries.filter(e => e.amount > 0 && e.item);
+  if (!valid.length) { toast('กรุณาเพิ่มรายการก่อน', true); return; }
+  $('saveBtn').disabled = true; $('saveBtn').textContent = 'กำลังบันทึก...';
+  const time = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false });
+  const payload = valid.map(e => ({ date: e.date || todayStr(), time, type: e.type, group: e.group, item: e.item, amount: e.amount, category: detectCategory(e.item), source: 'form', note: '' }));
+  fetch(EXEC_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'formSave', entries: payload }) })
+    .then(function() { showSuccess(payload.length); })
+    .catch(function(err) { toast('❌ ' + (err.message || err), true); $('saveBtn').disabled = false; $('saveBtn').textContent = '💾 บันทึกทั้งหมด'; });
+}
+
+addEntry();
+loadHistory();
+</script>
+</body>
+</html>
